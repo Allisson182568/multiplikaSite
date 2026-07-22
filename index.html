@@ -161,6 +161,22 @@
 
   .empty{ color:#9A9690; font-size:13px; padding:20px 0; }
 
+  /* ── detalhe do terreno ── */
+  .card.clickable{ cursor:pointer; }
+  .card.selected{ border-color:#FF6B00; box-shadow:0 0 0 1px #FF6B00; }
+  .galeria{ margin-top:8px; }
+  .galeria-principal{ border-radius:16px; overflow:hidden; aspect-ratio:16/10; background:#161616; }
+  .galeria-principal img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .galeria-dots{ display:flex; gap:6px; justify-content:center; margin-top:10px; }
+  .galeria-dot{
+    width:8px; height:8px; border-radius:50%; background:#2A2A2A; border:none; cursor:pointer; padding:0;
+  }
+  .galeria-dot.active{ background:#FF6B00; }
+  .det-info-grid{ display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; margin-top:8px; }
+  @media(max-width:520px){ .det-info-grid{ grid-template-columns:1fr 1fr; } }
+  .det-info-label{ font-size:11px; color:#57534E; font-family:'JetBrains Mono', monospace; text-transform:uppercase; margin-bottom:4px; }
+  .det-info-valor{ font-size:15px; font-weight:700; }
+
   /* ── admin (sub-abas dentro da área escondida) ── */
   .admin-subtabs{ display:flex; gap:8px; margin:32px 0 8px; flex-wrap:wrap; }
   .admin-subview{ display:none; }
@@ -278,6 +294,7 @@
     <button class="tab-btn active" data-view="home">Início</button>
     <button class="tab-btn" data-view="terrenos">Terrenos</button>
     <button class="tab-btn" data-view="modelos">Modelos</button>
+    <button class="tab-btn" data-view="ficha">Construção do sonho</button>
   </div>
 </nav>
 
@@ -430,6 +447,51 @@
     <div class="grid" id="grid-plantas"></div>
   </section>
 
+  <!-- ═══════════ DETALHE DO TERRENO ═══════════ -->
+  <section class="view" id="view-terreno-detalhe">
+    <button class="link-btn" style="margin:24px 0 16px; padding:0;" onclick="goTo('terrenos')">← Voltar pra Terrenos</button>
+
+    <div class="galeria">
+      <div class="galeria-principal" id="det-imagem-principal"></div>
+      <div class="galeria-dots" id="det-dots"></div>
+    </div>
+
+    <h2 id="det-titulo" style="font-size:22px; margin:20px 0 6px;"></h2>
+    <p id="det-localizacao" style="color:#9A9690; font-size:14px; margin-bottom:16px;"></p>
+
+    <div class="det-info-grid">
+      <div><div class="det-info-label">Área</div><div class="det-info-valor" id="det-area"></div></div>
+      <div><div class="det-info-label">Valor</div><div class="det-info-valor" id="det-valor" style="color:#FF6B00;"></div></div>
+      <div><div class="det-info-label">Condomínio</div><div class="det-info-valor" id="det-condominio"></div></div>
+      <div><div class="det-info-label">IPTU</div><div class="det-info-valor" id="det-iptu"></div></div>
+    </div>
+
+    <div class="dim-divider"><span>Descrição</span><div class="line"></div></div>
+    <p id="det-descricao" style="color:#9A9690; font-size:14px; line-height:1.6;"></p>
+
+    <p style="color:#57534E; font-size:12.5px; margin-top:18px;">Corretora responsável: <span id="det-corretora"></span></p>
+
+    <div class="hero-ctas" style="margin-top:28px;">
+      <button class="btn btn-primary" onclick="irParaFichaComTerreno()">Montar minha ficha com esse terreno</button>
+      <a class="btn btn-outline" id="det-link-anuncio" href="#" target="_blank" rel="noopener" style="text-decoration:none;">Ver anúncio original</a>
+    </div>
+  </section>
+
+  <!-- ═══════════ CONSTRUÇÃO DO SONHO ═══════════ -->
+  <section class="view" id="view-ficha">
+    <h2 style="font-size:24px; margin:32px 0 8px;">Construção do sonho</h2>
+    <p style="color:#9A9690; font-size:14px; margin-bottom:8px;">Escolha um terreno e um modelo de casa — a gente monta sua ficha na hora.</p>
+
+    <div class="dim-divider"><span>1. Escolha um terreno</span><div class="line"></div></div>
+    <div class="grid" id="ficha-grid-terrenos"></div>
+
+    <div class="dim-divider"><span>2. Escolha um modelo de casa</span><div class="line"></div></div>
+    <div class="grid" id="ficha-grid-plantas"></div>
+
+    <div class="dim-divider"><span>3. Sua ficha</span><div class="line"></div></div>
+    <div id="ficha-resultado"><p class="empty">Escolha um terreno e um modelo acima pra gerar sua ficha.</p></div>
+  </section>
+
   <!-- ═══════════ ÁREA ADMIN (acesso: 5 cliques no logo) ═══════════ -->
   <section class="view" id="view-admin">
     <div class="admin-subtabs" id="admin-subtabs">
@@ -456,6 +518,13 @@
             <input type="text" id="t-area" placeholder="Área (m²)">
             <input type="text" id="t-valor" placeholder="Valor (R$)">
           </div>
+          <div style="height:10px"></div>
+          <div class="row2">
+            <input type="text" id="t-condominio" placeholder="Condomínio (ex: Isento)">
+            <input type="text" id="t-iptu" placeholder="IPTU">
+          </div>
+          <div style="height:10px"></div>
+          <textarea id="t-descricao" rows="3" placeholder="Descrição do anúncio"></textarea>
         </div>
 
         <label class="field-label">3. Link do anúncio</label>
@@ -557,6 +626,7 @@ let quartosFiltro = null;
 
 // ───────────────────────── navegação ─────────────────────────
 function goTo(view){
+  clearInterval(galeriaTimer);
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById('view-' + view).classList.add('active');
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
@@ -596,10 +666,11 @@ function imgFallback(imgEl){
 }
 
 function cardTerreno(t){
+  const idx = mockTerrenos.indexOf(t);
   const img = t.imagem_url
     ? `<img src="${t.imagem_url}" onerror="imgFallback(this)">`
     : `<div class="img-fallback">sem foto</div>`;
-  return `<div class="card">
+  return `<div class="card clickable" onclick="abrirDetalheTerreno(${idx})">
     ${img}
     <div class="card-body">
       <div class="card-title">${t.localizacao}</div>
@@ -626,6 +697,159 @@ function cardPlanta(p){
 function renderHome(){
   document.getElementById('carousel-terrenos').innerHTML = mockTerrenos.map(cardTerreno).join('') || '<p class="empty">Nenhum terreno cadastrado ainda.</p>';
   document.getElementById('carousel-plantas').innerHTML = mockPlantas.map(cardPlanta).join('') || '<p class="empty">Nenhum modelo cadastrado ainda.</p>';
+}
+
+// ───────────────────────── detalhe do terreno + galeria ─────────────────────────
+let terrenoAtualDetalhe = null;
+let galeriaAtualIndex = 0;
+let galeriaTimer = null;
+
+function abrirDetalheTerreno(idx){
+  const t = mockTerrenos[idx];
+  if(!t) return;
+  terrenoAtualDetalhe = t;
+  goTo('terreno-detalhe');
+  renderDetalheTerreno();
+}
+
+function renderDetalheTerreno(){
+  const t = terrenoAtualDetalhe;
+  if(!t) return;
+  const imagens = [t.imagem_url, ...(t.imagens_extra || [])].filter(Boolean);
+  galeriaAtualIndex = 0;
+  clearInterval(galeriaTimer);
+
+  document.getElementById('det-titulo').textContent = t.titulo || t.localizacao || 'Terreno';
+  document.getElementById('det-localizacao').textContent = t.localizacao || '';
+  document.getElementById('det-area').textContent = t.area_m2 ? t.area_m2 + ' m²' : '—';
+  document.getElementById('det-valor').textContent = t.valor ? 'R$ ' + Number(t.valor).toLocaleString('pt-BR') : '—';
+  document.getElementById('det-condominio').textContent = t.condominio || '—';
+  document.getElementById('det-iptu').textContent = t.iptu || '—';
+  document.getElementById('det-descricao').textContent = t.descricao || 'Sem descrição detalhada disponível — fale com a corretora responsável pra saber mais.';
+  document.getElementById('det-corretora').textContent = t.corretora_responsavel || 'a definir';
+
+  const linkBtn = document.getElementById('det-link-anuncio');
+  if(t.link_anuncio){ linkBtn.href = t.link_anuncio; linkBtn.style.display = 'inline-flex'; }
+  else { linkBtn.style.display = 'none'; }
+
+  renderGaleria(imagens);
+  iniciarAutoRotacao(imagens);
+}
+
+function renderGaleria(imagens){
+  const main = document.getElementById('det-imagem-principal');
+  const dots = document.getElementById('det-dots');
+  if(imagens.length === 0){
+    main.innerHTML = '<div class="img-fallback" style="aspect-ratio:16/10; border-radius:16px;">sem foto</div>';
+    dots.innerHTML = '';
+    return;
+  }
+  main.innerHTML = `<img src="${imagens[0]}" onerror="imgFallback(this)">`;
+  dots.innerHTML = imagens.length > 1
+    ? imagens.map((_, i) => `<button class="galeria-dot ${i === 0 ? 'active' : ''}" onclick="irParaImagem(${i})"></button>`).join('')
+    : '';
+}
+
+function atualizarGaleria(imagens){
+  document.getElementById('det-imagem-principal').innerHTML = `<img src="${imagens[galeriaAtualIndex]}" onerror="imgFallback(this)">`;
+  document.querySelectorAll('.galeria-dot').forEach((d, i) => d.classList.toggle('active', i === galeriaAtualIndex));
+}
+
+function iniciarAutoRotacao(imagens){
+  clearInterval(galeriaTimer);
+  if(imagens.length <= 1) return;
+  galeriaTimer = setInterval(() => {
+    galeriaAtualIndex = (galeriaAtualIndex + 1) % imagens.length;
+    atualizarGaleria(imagens);
+  }, 4000);
+}
+
+function irParaImagem(i){
+  const t = terrenoAtualDetalhe;
+  if(!t) return;
+  const imagens = [t.imagem_url, ...(t.imagens_extra || [])].filter(Boolean);
+  galeriaAtualIndex = i;
+  atualizarGaleria(imagens);
+  iniciarAutoRotacao(imagens);
+}
+
+// ───────────────────────── construção do sonho (ficha) ─────────────────────────
+let fichaTerrenoIdx = null;
+let fichaModeloIdx = null;
+
+function cardTerrenoSelecionavel(t, idx){
+  const sel = idx === fichaTerrenoIdx ? ' selected' : '';
+  const img = t.imagem_url ? `<img src="${t.imagem_url}" onerror="imgFallback(this)">` : `<div class="img-fallback">sem foto</div>`;
+  return `<div class="card clickable${sel}" onclick="selecionarFichaTerreno(${idx})">
+    ${img}
+    <div class="card-body">
+      <div class="card-title">${t.localizacao}</div>
+      <div class="card-meta">${t.area_m2} m²</div>
+      <div class="card-price">R$ ${Number(t.valor).toLocaleString('pt-BR')}</div>
+    </div>
+  </div>`;
+}
+
+function cardPlantaSelecionavel(p, idx){
+  const sel = idx === fichaModeloIdx ? ' selected' : '';
+  const img = p.imagem_capa_url ? `<img src="${p.imagem_capa_url}" onerror="imgFallback(this)">` : `<div class="img-fallback">sem foto</div>`;
+  return `<div class="card clickable${sel}" onclick="selecionarFichaModelo(${idx})">
+    ${img}
+    <div class="card-body">
+      <div class="card-title">${p.titulo}</div>
+      <div class="card-meta">${p.area_construida_m2} m² · ${p.quartos} qts</div>
+      <div class="card-price">R$ ${Number(p.preco).toLocaleString('pt-BR')}</div>
+    </div>
+  </div>`;
+}
+
+function renderFichaGrids(){
+  document.getElementById('ficha-grid-terrenos').innerHTML =
+    mockTerrenos.map((t, i) => cardTerrenoSelecionavel(t, i)).join('') || '<p class="empty">Nenhum terreno cadastrado ainda.</p>';
+  document.getElementById('ficha-grid-plantas').innerHTML =
+    mockPlantas.map((p, i) => cardPlantaSelecionavel(p, i)).join('') || '<p class="empty">Nenhum modelo cadastrado ainda.</p>';
+}
+
+function selecionarFichaTerreno(idx){ fichaTerrenoIdx = idx; renderFichaGrids(); renderFicha(); }
+function selecionarFichaModelo(idx){ fichaModeloIdx = idx; renderFichaGrids(); renderFicha(); }
+
+function renderFicha(){
+  const box = document.getElementById('ficha-resultado');
+  const t = mockTerrenos[fichaTerrenoIdx];
+  const p = mockPlantas[fichaModeloIdx];
+  if(!t || !p){
+    box.innerHTML = '<p class="empty">Escolha um terreno e um modelo acima pra gerar sua ficha.</p>';
+    return;
+  }
+  const custoM2 = 1800;
+  const custoConstrucao = custoM2 * (p.area_construida_m2 || 0);
+  const total = (t.valor || 0) + (p.preco || 0) + custoConstrucao;
+
+  const msg = encodeURIComponent(
+    `Olá! Montei minha ficha no site da Multiplika:\n\n` +
+    `Terreno: ${t.localizacao} — R$ ${Number(t.valor).toLocaleString('pt-BR')}\n` +
+    `Modelo: ${p.titulo} (${p.area_construida_m2} m²) — R$ ${Number(p.preco).toLocaleString('pt-BR')}\n` +
+    `Construção estimada: R$ ${custoConstrucao.toLocaleString('pt-BR', {maximumFractionDigits:0})}\n` +
+    `Total estimado: R$ ${total.toLocaleString('pt-BR', {maximumFractionDigits:0})}\n\n` +
+    `Quero saber os próximos passos!`
+  );
+
+  box.innerHTML = `
+    <div class="calc-card">
+      <div class="calc-line"><span>Terreno (${t.localizacao})</span><span>R$ ${Number(t.valor).toLocaleString('pt-BR')}</span></div>
+      <div class="calc-line"><span>Modelo (${p.titulo})</span><span>R$ ${Number(p.preco).toLocaleString('pt-BR')}</span></div>
+      <div class="calc-line"><span>Construção (${p.area_construida_m2} m² × R$ ${custoM2}/m²)</span><span>R$ ${custoConstrucao.toLocaleString('pt-BR', {maximumFractionDigits:0})}</span></div>
+      <div class="calc-line total"><span>Total estimado</span><span>R$ ${total.toLocaleString('pt-BR', {maximumFractionDigits:0})}</span></div>
+      <a class="btn btn-primary" style="display:block; text-align:center; margin-top:20px; text-decoration:none;" href="https://wa.me/5519989471441?text=${msg}" target="_blank" rel="noopener">Enviar ficha pelo WhatsApp</a>
+    </div>
+  `;
+}
+
+function irParaFichaComTerreno(){
+  fichaTerrenoIdx = mockTerrenos.indexOf(terrenoAtualDetalhe);
+  goTo('ficha');
+  renderFichaGrids();
+  renderFicha();
 }
 
 function renderTerrenos(){
@@ -737,18 +961,46 @@ function parseTerrenoTexto(raw){
 
   const linhas = texto.split('\n').map(l => l.trim()).filter(Boolean);
 
-  // Prioridade 1: linha com "à venda" — é o padrão de título em Viva Real/ZAP/OLX
-  titulo = linhas.find(l => /\bà\s?venda\b/i.test(l) && l.length < 140) || null;
-
-  // Prioridade 2: fallback — primeira linha "útil", ignorando lixo comum de menu/acessibilidade
+  // Título: linha com tipo de imóvel + (venda OU m²) — mais específico que só "à venda"
+  const tipoImovel = /(lote|terreno|casa|sobrado|apartamento|chácara|sítio|kitnet|galpão)/i;
+  titulo = linhas.find(l => tipoImovel.test(l) && /\bvenda\b|m[²2]/i.test(l) && l.length < 140) || null;
   if(!titulo){
-    const linhaLixo = /^(entrar|favoritar|compartilhar|menu|filtrar|anunciar|buscar|voltar|ver mais|pular para o conteúdo principal|faça login.*|.*fotosmapa.*|para comprar)$/i;
+    const linhaLixo = /^(entrar|favoritar|compartilhar|menu|filtrar|anunciar|buscar|voltar|ver mais|pular para o conteúdo principal|faça login.*|.*fotosmapa.*|para comprar|logo do .*)$/i;
     for(const l of linhas){
       if(l.length < 8 || linhaLixo.test(l)) continue;
       titulo = l; break;
     }
   }
-  return {titulo, localizacao, areaM2: area, valor};
+
+  // Descrição: parágrafo entre aspas, padrão comum em anúncios do Viva Real/ZAP/OLX
+  const descMatch = texto.match(/"([^"]{40,900})"/);
+  const descricao = descMatch ? descMatch[1].trim() : null;
+
+  // Helper: acha o valor logo após um rótulo (mesma linha ou linha seguinte)
+  function valorAposLabel(labelRegex){
+    for(let i = 0; i < linhas.length; i++){
+      if(labelRegex.test(linhas[i])){
+        const resto = linhas[i].replace(labelRegex, '').trim();
+        if(resto) return resto;
+        if(linhas[i+1]) return linhas[i+1];
+      }
+    }
+    return null;
+  }
+
+  const condominio = valorAposLabel(/^condom[íi]nio\b/i);
+  const iptu = valorAposLabel(/^iptu\b/i);
+
+  // Corretora responsável: tenta achar pelo CRECI + nome da imobiliária na linha anterior
+  let corretora = null;
+  const creciMatch = texto.match(/Creci:?\s*([\w\-.\/]+)/i);
+  if(creciMatch){
+    const idx = linhas.findIndex(l => /creci/i.test(l));
+    const nomeImobiliaria = idx > 0 ? linhas[idx - 1] : null;
+    corretora = nomeImobiliaria ? `${nomeImobiliaria} (CRECI ${creciMatch[1]})` : `CRECI ${creciMatch[1]}`;
+  }
+
+  return {titulo, localizacao, areaM2: area, valor, descricao, condominio, iptu, corretora};
 }
 
 // ───────────────────────── campos de imagem dinâmicos (terreno) ─────────────────────────
@@ -791,6 +1043,12 @@ function processarTexto(){
   document.getElementById('t-localizacao').value = r.localizacao || '';
   document.getElementById('t-area').value = r.areaM2 || '';
   document.getElementById('t-valor').value = r.valor || '';
+  document.getElementById('t-condominio').value = r.condominio || '';
+  document.getElementById('t-iptu').value = r.iptu || '';
+  document.getElementById('t-descricao').value = r.descricao || '';
+  if(r.corretora && !document.getElementById('t-corretora').value){
+    document.getElementById('t-corretora').value = r.corretora;
+  }
   document.getElementById('campos-terreno').style.display = 'block';
 }
 
@@ -813,6 +1071,9 @@ async function salvarTerreno(){
     localizacao: document.getElementById('t-localizacao').value,
     area_m2: parseFloat(document.getElementById('t-area').value) || null,
     valor: parseFloat(document.getElementById('t-valor').value) || null,
+    condominio: document.getElementById('t-condominio').value,
+    iptu: document.getElementById('t-iptu').value,
+    descricao: document.getElementById('t-descricao').value,
     link_anuncio: document.getElementById('t-link').value,
     imagem_url: imagens[0] || '',
     imagens_extra: imagens.slice(1),
@@ -827,7 +1088,7 @@ async function salvarTerreno(){
   }
   if(!supabaseClient){
     mockTerrenos.unshift(payload);
-    renderHome(); renderTerrenos();
+    renderHome(); renderTerrenos(); renderFichaGrids();
     statusEl.textContent = 'Salvo localmente (modo de prévia — conecte o Supabase na aba Configurações pra persistir de verdade).';
     statusEl.style.color = '#FF6B00';
     return;
@@ -858,7 +1119,7 @@ async function salvarPlanta(){
   }
   if(!supabaseClient){
     mockPlantas.unshift(payload);
-    renderHome(); renderPlantas();
+    renderHome(); renderPlantas(); renderFichaGrids();
     statusEl.textContent = 'Salvo localmente (modo de prévia — conecte o Supabase na aba Configurações pra persistir de verdade).';
     statusEl.style.color = '#FF6B00';
     return;
@@ -893,7 +1154,7 @@ async function conectarSupabase(urlParam, keyParam){
     const {data: plantas} = await supabaseClient.from('plantas').select('*').order('created_at',{ascending:false});
     if(terrenos){ mockTerrenos.length = 0; mockTerrenos.push(...terrenos); }
     if(plantas){ mockPlantas.length = 0; mockPlantas.push(...plantas); }
-    renderHome(); renderTerrenos(); renderPlantas(); popularSelectsCalculadora();
+    renderHome(); renderTerrenos(); renderPlantas(); popularSelectsCalculadora(); renderFichaGrids();
   }catch(e){
     supabaseClient = null;
     pill.classList.remove('on'); pill.classList.add('off');
@@ -903,7 +1164,7 @@ async function conectarSupabase(urlParam, keyParam){
 
 // ───────────────────────── boot ─────────────────────────
 try{
-  renderHome(); renderTerrenos(); renderFiltroQuartos(); renderPlantas();
+  renderHome(); renderTerrenos(); renderFiltroQuartos(); renderPlantas(); renderFichaGrids();
   popularSelectsCalculadora(); renderFAQ(); calcularSimulador();
   limparCamposImagem();
   document.getElementById('cfg-url').value = SUPABASE_URL;
