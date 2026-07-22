@@ -351,10 +351,10 @@
           </select>
         </div>
       </div>
-      <p class="hint">Estimativa considerando entrada de 20% do valor — o percentual real depende da análise de crédito e da faixa do MCMV.</p>
+      <p class="hint">Estimativa considerando entrada de 20% do valor, parcelada sem juros até 12x. Acima disso, aplicamos correção de 1% ao mês. O percentual e as condições reais dependem da análise de crédito e da faixa do MCMV.</p>
       <div class="sim-result">
         <div><div class="num" id="sim-entrada">R$ 0</div><div class="lbl">Entrada estimada (20%)</div></div>
-        <div><div class="num" id="sim-parcela">R$ 0</div><div class="lbl">Parcela mensal da entrada, sem juros</div></div>
+        <div><div class="num" id="sim-parcela">R$ 0</div><div class="lbl" id="sim-parcela-label">Parcela mensal da entrada, sem juros</div></div>
       </div>
     </div>
     <div class="dim-divider"><span>Terrenos em destaque</span><div class="line"></div></div>
@@ -532,7 +532,7 @@
 
         <label class="field-label">4. Links das imagens (clique direito em cada foto → copiar endereço da imagem). A primeira é a capa.</label>
         <div id="t-imagens-lista"></div>
-        <button type="button" class="link-btn" style="padding:4px 0;" onclick="adicionarCampoImagem()">+ Adicionar imagem</button>
+        <button type="button" class="link-btn" style="padding:4px 0;" onclick="adicionarCampoImagem('t')">+ Adicionar imagem</button>
 
         <label class="field-label">5. Corretora responsável</label>
         <input type="text" id="t-corretora" placeholder="Nome da corretora">
@@ -546,8 +546,12 @@
     <div class="admin-subview" id="admin-cadastro-planta">
       <h2 style="font-size:24px; margin:24px 0 20px;">Cadastrar modelo de casa</h2>
       <div class="form-card">
-        <label class="field-label">Título</label>
-        <input type="text" id="p-titulo" placeholder="Casa 3 quartos com suíte">
+        <label class="field-label">1. Cole aqui o texto da página do projeto (Ctrl+A na página, Ctrl+V aqui)</label>
+        <textarea id="txt-bruto-planta" rows="5" placeholder="Cole o texto completo da página do projeto..." oninput="document.getElementById('btn-filtrar-planta').disabled = !this.value.trim()"></textarea>
+        <button class="btn btn-primary" id="btn-filtrar-planta" style="margin-top:12px; width:100%;" disabled onclick="processarTextoPlanta()">Filtrar informações</button>
+
+        <label class="field-label">2. Confira e ajuste</label>
+        <input type="text" id="p-titulo" placeholder="Título">
 
         <div class="row2">
           <div><label class="field-label">Área construída (m²)</label><input type="text" id="p-area"></div>
@@ -560,12 +564,9 @@
           <div><label class="field-label">Vagas</label><input type="text" id="p-vagas"></div>
         </div>
 
-        <label class="field-label">Imagem de capa (fachada)</label>
-        <input type="text" id="p-imagem" placeholder="https://...jpg" oninput="previewImagem('p-imagem','p-preview')">
-        <div class="img-preview" id="p-preview" style="display:none;"><img></div>
-
-        <label class="field-label">Imagens extras (planta baixa, humanizada, cortes — uma por linha)</label>
-        <textarea id="p-extras" rows="3" placeholder="https://...&#10;https://..."></textarea>
+        <label class="field-label">3. Links das imagens (clique direito em cada imagem → copiar endereço da imagem). A primeira é a capa.</label>
+        <div id="p-imagens-lista"></div>
+        <button type="button" class="link-btn" style="padding:4px 0;" onclick="adicionarCampoImagem('p')">+ Adicionar imagem</button>
 
         <button class="btn btn-primary" style="margin-top:24px; width:100%;" onclick="salvarPlanta()">Salvar modelo</button>
         <p class="hint" id="p-status"></p>
@@ -880,9 +881,21 @@ function calcularSimulador(){
   const valor = parseFloat(document.getElementById('sim-valor').value) || 0;
   const parcelas = parseInt(document.getElementById('sim-parcelas').value) || 1;
   const entrada = valor * 0.2;
-  const parcela = entrada / parcelas;
+  const comCorrecao = parcelas > 12;
+
+  let parcela;
+  if(comCorrecao){
+    const i = 0.01; // 1% ao mês
+    parcela = entrada * (i * Math.pow(1 + i, parcelas)) / (Math.pow(1 + i, parcelas) - 1);
+  } else {
+    parcela = entrada / parcelas;
+  }
+
   document.getElementById('sim-entrada').textContent = 'R$ ' + entrada.toLocaleString('pt-BR', {maximumFractionDigits:0});
   document.getElementById('sim-parcela').textContent = 'R$ ' + parcela.toLocaleString('pt-BR', {maximumFractionDigits:0});
+  document.getElementById('sim-parcela-label').textContent = comCorrecao
+    ? 'Parcela mensal da entrada, com correção de 1% a.m.'
+    : 'Parcela mensal da entrada, sem juros';
 }
 
 // ───────────────────────── calculadora consolidada (terreno + modelo) ─────────────────────────
@@ -1003,18 +1016,18 @@ function parseTerrenoTexto(raw){
   return {titulo, localizacao, areaM2: area, valor, descricao, condominio, iptu, corretora};
 }
 
-// ───────────────────────── campos de imagem dinâmicos (terreno) ─────────────────────────
-function criarCampoImagem(){
+// ───────────────────────── campos de imagem dinâmicos (reutilizável: terreno 't' / modelo 'p') ─────────────────────────
+function criarCampoImagem(prefix){
   const row = document.createElement('div');
   row.className = 'img-row';
   row.innerHTML = `
     <div class="img-row-fields">
-      <input type="text" class="t-imagem-input" placeholder="https://...jpg">
+      <input type="text" class="${prefix}-imagem-input" placeholder="https://...jpg">
       <div class="img-preview" style="display:none;"><img></div>
     </div>
     <button type="button" class="img-row-remove" title="Remover">×</button>
   `;
-  const input = row.querySelector('.t-imagem-input');
+  const input = row.querySelector(`.${prefix}-imagem-input`);
   const preview = row.querySelector('.img-preview');
   input.addEventListener('input', () => {
     const url = input.value.trim();
@@ -1026,14 +1039,14 @@ function criarCampoImagem(){
   return row;
 }
 
-function adicionarCampoImagem(){
-  document.getElementById('t-imagens-lista').appendChild(criarCampoImagem());
+function adicionarCampoImagem(prefix){
+  document.getElementById(prefix + '-imagens-lista').appendChild(criarCampoImagem(prefix));
 }
 
-function limparCamposImagem(){
-  const lista = document.getElementById('t-imagens-lista');
+function limparCamposImagem(prefix){
+  const lista = document.getElementById(prefix + '-imagens-lista');
   lista.innerHTML = '';
-  lista.appendChild(criarCampoImagem());
+  lista.appendChild(criarCampoImagem(prefix));
 }
 
 function processarTexto(){
@@ -1096,11 +1109,52 @@ async function salvarTerreno(){
   const {error} = await supabaseClient.from('terrenos').insert(payload);
   statusEl.textContent = error ? 'Erro ao salvar: ' + error.message : 'Terreno salvo no Supabase.';
   statusEl.style.color = error ? '#E74C3C' : '#2ECC71';
-  if(!error) limparCamposImagem();
+  if(!error) limparCamposImagem('t');
+}
+
+// ───────────────────────── parser do texto colado (iProjetei e similares) ─────────────────────────
+function parsePlantaTexto(raw){
+  const texto = raw.trim();
+
+  const tipoProjeto = /(projeto de|planta de|casa|sobrado|apartamento|resid[êe]ncia)/i;
+  const linhas = texto.split('\n').map(l => l.trim()).filter(Boolean);
+  const titulo = linhas.find(l => tipoProjeto.test(l) && /m[²2]/i.test(l) && l.length < 140) || null;
+
+  let areaM2 = null;
+  const areaMatch = texto.match(/[ÁA]rea\s+da\s+constru[çc][ãa]o\s*\(?m[²2]\)?:?\s*([\d.,]+)/i)
+                  || texto.match(/(\d{2,4}(?:[.,]\d+)?)\s?m[²2]/);
+  if(areaMatch) areaM2 = parseFloat(areaMatch[1].replace(/\./g,'').replace(',','.'));
+
+  const banheirosMatch = texto.match(/Banheiros?:?\s*(\d+)/i);
+  const banheiros = banheirosMatch ? parseInt(banheirosMatch[1]) : null;
+
+  const quartosMatch = texto.match(/Dormit[óo]rios?:?\s*(\d+)/i) || texto.match(/Quartos?:?\s*(\d+)/i);
+  const quartos = quartosMatch ? parseInt(quartosMatch[1]) : null;
+
+  const vagasMatch = texto.match(/Garagem:?\s*(\d+)/i) || texto.match(/Vagas?:?\s*(\d+)/i);
+  const vagas = vagasMatch ? parseInt(vagasMatch[1]) : null;
+
+  const precoMatch = texto.match(/R\$\s?([\d.]{3,12}(?:,\d{2})?)/);
+  const preco = precoMatch ? parseFloat(precoMatch[1].replace(/\./g,'').replace(',','.')) : null;
+
+  return {titulo, areaM2, banheiros, quartos, vagas, preco};
+}
+
+function processarTextoPlanta(){
+  const raw = document.getElementById('txt-bruto-planta').value;
+  const r = parsePlantaTexto(raw);
+  document.getElementById('p-titulo').value = r.titulo || '';
+  document.getElementById('p-area').value = r.areaM2 || '';
+  document.getElementById('p-quartos').value = r.quartos || '';
+  document.getElementById('p-banheiros').value = r.banheiros || '';
+  document.getElementById('p-vagas').value = r.vagas || '';
+  if(r.preco) document.getElementById('p-preco').value = r.preco;
 }
 
 async function salvarPlanta(){
-  const extras = document.getElementById('p-extras').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  const imagens = Array.from(document.querySelectorAll('.p-imagem-input'))
+    .map(el => el.value.trim()).filter(Boolean);
+
   const payload = {
     titulo: document.getElementById('p-titulo').value,
     area_construida_m2: parseFloat(document.getElementById('p-area').value) || null,
@@ -1108,8 +1162,8 @@ async function salvarPlanta(){
     banheiros: parseInt(document.getElementById('p-banheiros').value) || null,
     vagas: parseInt(document.getElementById('p-vagas').value) || null,
     preco: parseFloat(document.getElementById('p-preco').value) || null,
-    imagem_capa_url: document.getElementById('p-imagem').value,
-    imagens_extra: extras,
+    imagem_capa_url: imagens[0] || '',
+    imagens_extra: imagens.slice(1),
   };
   const statusEl = document.getElementById('p-status');
   if(!payload.titulo || !payload.preco){
@@ -1127,6 +1181,7 @@ async function salvarPlanta(){
   const {error} = await supabaseClient.from('plantas').insert(payload);
   statusEl.textContent = error ? 'Erro ao salvar: ' + error.message : 'Modelo salvo no Supabase.';
   statusEl.style.color = error ? '#E74C3C' : '#2ECC71';
+  if(!error) limparCamposImagem('p');
 }
 
 // ───────────────────────── configuração supabase ─────────────────────────
@@ -1166,7 +1221,8 @@ async function conectarSupabase(urlParam, keyParam){
 try{
   renderHome(); renderTerrenos(); renderFiltroQuartos(); renderPlantas(); renderFichaGrids();
   popularSelectsCalculadora(); renderFAQ(); calcularSimulador();
-  limparCamposImagem();
+  limparCamposImagem('t');
+  limparCamposImagem('p');
   document.getElementById('cfg-url').value = SUPABASE_URL;
   document.getElementById('cfg-key').value = SUPABASE_ANON_KEY;
   conectarSupabase(SUPABASE_URL, SUPABASE_ANON_KEY);
