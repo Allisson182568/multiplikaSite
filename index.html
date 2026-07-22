@@ -161,6 +161,19 @@
 
   .empty{ color:#9A9690; font-size:13px; padding:20px 0; }
 
+  /* ── admin (sub-abas dentro da área escondida) ── */
+  .admin-subtabs{ display:flex; gap:8px; margin:32px 0 8px; flex-wrap:wrap; }
+  .admin-subview{ display:none; }
+  .admin-subview.active{ display:block; }
+  .img-row{ display:flex; align-items:flex-start; gap:8px; margin-bottom:10px; }
+  .img-row-fields{ flex:1; }
+  .img-row .img-preview{ margin-top:8px; }
+  .img-row-remove{
+    background:none; border:1px solid #2A2A2A; color:#9A9690; border-radius:8px;
+    width:38px; height:38px; flex:0 0 auto; cursor:pointer; font-size:16px; line-height:1;
+  }
+  .img-row-remove:hover{ border-color:#B34C00; color:#FF6B00; }
+
   /* ── comparativo pronto vs construir ── */
   .compare-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
   @media(max-width:600px){ .compare-grid{ grid-template-columns:1fr; } }
@@ -265,8 +278,6 @@
     <button class="tab-btn active" data-view="home">Início</button>
     <button class="tab-btn" data-view="terrenos">Terrenos</button>
     <button class="tab-btn" data-view="modelos">Modelos</button>
-    <button class="tab-btn" data-view="cadastro-terreno">Cadastrar terreno</button>
-    <button class="tab-btn" data-view="cadastro-planta">Cadastrar modelo</button>
   </div>
 </nav>
 
@@ -419,89 +430,98 @@
     <div class="grid" id="grid-plantas"></div>
   </section>
 
-  <!-- ═══════════ CADASTRO TERRENO ═══════════ -->
-  <section class="view" id="view-cadastro-terreno">
-    <h2 style="font-size:24px; margin:32px 0 20px;">Captar terreno</h2>
-    <div class="form-card">
-      <label class="field-label">1. Cole aqui o texto do anúncio (Ctrl+A no anúncio, Ctrl+V aqui)</label>
-      <textarea id="txt-bruto" rows="5" placeholder="Cole o texto completo do anúncio..." oninput="document.getElementById('btn-filtrar').disabled = !this.value.trim()"></textarea>
-      <button class="btn btn-primary" id="btn-filtrar" style="margin-top:12px; width:100%;" disabled onclick="processarTexto()">Filtrar informações</button>
+  <!-- ═══════════ ÁREA ADMIN (acesso: 5 cliques no logo) ═══════════ -->
+  <section class="view" id="view-admin">
+    <div class="admin-subtabs" id="admin-subtabs">
+      <button class="tab-btn active" data-subview="cadastro-terreno">Cadastrar terreno</button>
+      <button class="tab-btn" data-subview="cadastro-planta">Cadastrar modelo</button>
+      <button class="tab-btn" data-subview="config">Configurações</button>
+    </div>
 
-      <div id="campos-terreno" style="display:none;">
-        <label class="field-label">2. Confira e ajuste</label>
-        <input type="text" id="t-titulo" placeholder="Título">
-        <div style="height:10px"></div>
-        <input type="text" id="t-localizacao" placeholder="Bairro, Cidade - UF">
-        <div style="height:10px"></div>
-        <div class="row2">
-          <input type="text" id="t-area" placeholder="Área (m²)">
-          <input type="text" id="t-valor" placeholder="Valor (R$)">
+    <!-- ─── Cadastro de terreno ─── -->
+    <div class="admin-subview active" id="admin-cadastro-terreno">
+      <h2 style="font-size:24px; margin:24px 0 20px;">Captar terreno</h2>
+      <div class="form-card">
+        <label class="field-label">1. Cole aqui o texto do anúncio (Ctrl+A no anúncio, Ctrl+V aqui)</label>
+        <textarea id="txt-bruto" rows="5" placeholder="Cole o texto completo do anúncio..." oninput="document.getElementById('btn-filtrar').disabled = !this.value.trim()"></textarea>
+        <button class="btn btn-primary" id="btn-filtrar" style="margin-top:12px; width:100%;" disabled onclick="processarTexto()">Filtrar informações</button>
+
+        <div id="campos-terreno" style="display:none;">
+          <label class="field-label">2. Confira e ajuste</label>
+          <input type="text" id="t-titulo" placeholder="Título">
+          <div style="height:10px"></div>
+          <input type="text" id="t-localizacao" placeholder="Bairro, Cidade - UF">
+          <div style="height:10px"></div>
+          <div class="row2">
+            <input type="text" id="t-area" placeholder="Área (m²)">
+            <input type="text" id="t-valor" placeholder="Valor (R$)">
+          </div>
         </div>
+
+        <label class="field-label">3. Link do anúncio</label>
+        <input type="text" id="t-link" placeholder="https://www.vivareal.com.br/imovel/...">
+
+        <label class="field-label">4. Links das imagens (clique direito em cada foto → copiar endereço da imagem). A primeira é a capa.</label>
+        <div id="t-imagens-lista"></div>
+        <button type="button" class="link-btn" style="padding:4px 0;" onclick="adicionarCampoImagem()">+ Adicionar imagem</button>
+
+        <label class="field-label">5. Corretora responsável</label>
+        <input type="text" id="t-corretora" placeholder="Nome da corretora">
+
+        <button class="btn btn-primary" style="margin-top:24px; width:100%;" onclick="salvarTerreno()">Salvar terreno</button>
+        <p class="hint" id="t-status"></p>
       </div>
-
-      <label class="field-label">3. Link do anúncio</label>
-      <input type="text" id="t-link" placeholder="https://www.vivareal.com.br/imovel/...">
-
-      <label class="field-label">4. Link da imagem (clique direito na foto → copiar endereço da imagem)</label>
-      <input type="text" id="t-imagem" placeholder="https://...jpg" oninput="previewImagem('t-imagem','t-preview')">
-      <div class="img-preview" id="t-preview" style="display:none;"><img></div>
-
-      <label class="field-label">5. Corretora responsável</label>
-      <input type="text" id="t-corretora" placeholder="Nome da corretora">
-
-      <button class="btn btn-primary" style="margin-top:24px; width:100%;" onclick="salvarTerreno()">Salvar terreno</button>
-      <p class="hint" id="t-status"></p>
     </div>
-  </section>
 
-  <!-- ═══════════ CADASTRO PLANTA ═══════════ -->
-  <section class="view" id="view-cadastro-planta">
-    <h2 style="font-size:24px; margin:32px 0 20px;">Cadastrar modelo de casa</h2>
-    <div class="form-card">
-      <label class="field-label">Título</label>
-      <input type="text" id="p-titulo" placeholder="Casa 3 quartos com suíte">
+    <!-- ─── Cadastro de planta ─── -->
+    <div class="admin-subview" id="admin-cadastro-planta">
+      <h2 style="font-size:24px; margin:24px 0 20px;">Cadastrar modelo de casa</h2>
+      <div class="form-card">
+        <label class="field-label">Título</label>
+        <input type="text" id="p-titulo" placeholder="Casa 3 quartos com suíte">
 
-      <div class="row2">
-        <div><label class="field-label">Área construída (m²)</label><input type="text" id="p-area"></div>
-        <div><label class="field-label">Preço do projeto (R$)</label><input type="text" id="p-preco"></div>
+        <div class="row2">
+          <div><label class="field-label">Área construída (m²)</label><input type="text" id="p-area"></div>
+          <div><label class="field-label">Preço do projeto (R$)</label><input type="text" id="p-preco"></div>
+        </div>
+
+        <div class="row3">
+          <div><label class="field-label">Quartos</label><input type="text" id="p-quartos"></div>
+          <div><label class="field-label">Banheiros</label><input type="text" id="p-banheiros"></div>
+          <div><label class="field-label">Vagas</label><input type="text" id="p-vagas"></div>
+        </div>
+
+        <label class="field-label">Imagem de capa (fachada)</label>
+        <input type="text" id="p-imagem" placeholder="https://...jpg" oninput="previewImagem('p-imagem','p-preview')">
+        <div class="img-preview" id="p-preview" style="display:none;"><img></div>
+
+        <label class="field-label">Imagens extras (planta baixa, humanizada, cortes — uma por linha)</label>
+        <textarea id="p-extras" rows="3" placeholder="https://...&#10;https://..."></textarea>
+
+        <button class="btn btn-primary" style="margin-top:24px; width:100%;" onclick="salvarPlanta()">Salvar modelo</button>
+        <p class="hint" id="p-status"></p>
       </div>
-
-      <div class="row3">
-        <div><label class="field-label">Quartos</label><input type="text" id="p-quartos"></div>
-        <div><label class="field-label">Banheiros</label><input type="text" id="p-banheiros"></div>
-        <div><label class="field-label">Vagas</label><input type="text" id="p-vagas"></div>
-      </div>
-
-      <label class="field-label">Imagem de capa (fachada)</label>
-      <input type="text" id="p-imagem" placeholder="https://...jpg" oninput="previewImagem('p-imagem','p-preview')">
-      <div class="img-preview" id="p-preview" style="display:none;"><img></div>
-
-      <label class="field-label">Imagens extras (planta baixa, humanizada, cortes — uma por linha)</label>
-      <textarea id="p-extras" rows="3" placeholder="https://...&#10;https://..."></textarea>
-
-      <button class="btn btn-primary" style="margin-top:24px; width:100%;" onclick="salvarPlanta()">Salvar modelo</button>
-      <p class="hint" id="p-status"></p>
     </div>
-  </section>
 
-  <!-- ═══════════ CONFIGURAÇÕES ═══════════ -->
-  <section class="view" id="view-config">
-    <h2 style="font-size:24px; margin:32px 0 20px;">Configurações</h2>
-    <div class="form-card">
-      <div class="status-pill off" id="conn-status"><span class="dot"></span> <span id="conn-status-text">Não conectado — exibindo dados de exemplo</span></div>
+    <!-- ─── Configurações ─── -->
+    <div class="admin-subview" id="admin-config">
+      <h2 style="font-size:24px; margin:24px 0 20px;">Configurações</h2>
+      <div class="form-card">
+        <div class="status-pill off" id="conn-status"><span class="dot"></span> <span id="conn-status-text">Não conectado — exibindo dados de exemplo</span></div>
 
-      <label class="field-label">Supabase Project URL</label>
-      <input type="text" id="cfg-url" placeholder="https://xxxxxxxx.supabase.co">
+        <label class="field-label">Supabase Project URL</label>
+        <input type="text" id="cfg-url" placeholder="https://xxxxxxxx.supabase.co">
 
-      <label class="field-label">Supabase anon/public key</label>
-      <input type="text" id="cfg-key" placeholder="eyJhbGciOi...">
+        <label class="field-label">Supabase anon/public key</label>
+        <input type="text" id="cfg-key" placeholder="eyJhbGciOi...">
 
-      <button class="btn btn-primary" style="margin-top:20px; width:100%;" onclick="conectarSupabase()">Conectar</button>
+        <button class="btn btn-primary" style="margin-top:20px; width:100%;" onclick="conectarSupabase()">Conectar</button>
 
-      <div class="note-box">
-        <b>Sobre essas chaves:</b> a chave <b>anon/public</b> do Supabase foi feita pra ficar exposta no código do front-end — quem protege seus dados são as políticas de <b>Row Level Security (RLS)</b> nas tabelas, não o sigilo dessa chave. Nunca use a <i>service_role key</i> aqui.
-        <br><br>
-        Como isso é uma prévia isolada, as chaves ficam só na memória desta aba e somem se você recarregar a página. No repositório final, o mais comum é deixar essas duas linhas fixas direto no arquivo (elas são públicas por natureza, protegidas pelo RLS).
+        <div class="note-box">
+          <b>Sobre essas chaves:</b> a chave <b>anon/public</b> do Supabase foi feita pra ficar exposta no código do front-end — quem protege seus dados são as políticas de <b>Row Level Security (RLS)</b> nas tabelas, não o sigilo dessa chave. Nunca use a <i>service_role key</i> aqui.
+          <br><br>
+          Como isso é uma prévia isolada, as chaves ficam só na memória desta aba e somem se você recarregar a página. No repositório final, o mais comum é deixar essas duas linhas fixas direto no arquivo (elas são públicas por natureza, protegidas pelo RLS).
+        </div>
       </div>
     </div>
   </section>
@@ -516,6 +536,7 @@
 // está nas políticas de RLS do banco, não no sigilo dessa chave.
 const SUPABASE_URL = 'https://wfoysxuynbcuxybkqmfz.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indmb3lzeHV5bmJjdXh5YmtxbWZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3OTk3NDcsImV4cCI6MjA4ODM3NTc0N30.v28Tj6z6PrnyUk_kFSvvchjzwHmV7ZXcJH903hQTiZg';
+
 
 let supabaseClient = null;
 
@@ -545,7 +566,7 @@ document.getElementById('tabs').addEventListener('click', e => {
   if(e.target.matches('.tab-btn')) goTo(e.target.dataset.view);
 });
 
-// ───────────────────────── acesso escondido às configurações ─────────────────────────
+// ───────────────────────── acesso escondido à área admin ─────────────────────────
 let logoCliques = 0;
 let logoTimer = null;
 document.getElementById('logo-secreto').addEventListener('click', () => {
@@ -554,8 +575,18 @@ document.getElementById('logo-secreto').addEventListener('click', () => {
   logoTimer = setTimeout(() => { logoCliques = 0; }, 1500);
   if(logoCliques >= 5){
     logoCliques = 0;
-    goTo('config');
+    goTo('admin');
+    adminGoTo('cadastro-terreno');
   }
+});
+
+function adminGoTo(subview){
+  document.querySelectorAll('.admin-subview').forEach(v => v.classList.remove('active'));
+  document.getElementById('admin-' + subview).classList.add('active');
+  document.querySelectorAll('#admin-subtabs .tab-btn').forEach(b => b.classList.toggle('active', b.dataset.subview === subview));
+}
+document.getElementById('admin-subtabs').addEventListener('click', e => {
+  if(e.target.matches('.tab-btn')) adminGoTo(e.target.dataset.subview);
 });
 
 // ───────────────────────── render cards ─────────────────────────
@@ -704,13 +735,53 @@ function parseTerrenoTexto(raw){
   const locMatch = texto.match(/([A-ZÀ-Ú][a-zà-úA-ZÀ-Ú\s]{2,40}),\s*([A-ZÀ-Ú][a-zà-úA-ZÀ-Ú\s]{2,40})\s*-\s*([A-Z]{2})\b/);
   if(locMatch) localizacao = `${locMatch[1].trim()}, ${locMatch[2].trim()} - ${locMatch[3]}`;
 
-  const linhaLixo = /^(entrar|favoritar|compartilhar|menu|filtrar|anunciar|buscar|voltar|ver mais)$/i;
-  for(const linha of texto.split('\n')){
-    const l = linha.trim();
-    if(l.length < 8 || linhaLixo.test(l)) continue;
-    titulo = l; break;
+  const linhas = texto.split('\n').map(l => l.trim()).filter(Boolean);
+
+  // Prioridade 1: linha com "à venda" — é o padrão de título em Viva Real/ZAP/OLX
+  titulo = linhas.find(l => /\bà\s?venda\b/i.test(l) && l.length < 140) || null;
+
+  // Prioridade 2: fallback — primeira linha "útil", ignorando lixo comum de menu/acessibilidade
+  if(!titulo){
+    const linhaLixo = /^(entrar|favoritar|compartilhar|menu|filtrar|anunciar|buscar|voltar|ver mais|pular para o conteúdo principal|faça login.*|.*fotosmapa.*|para comprar)$/i;
+    for(const l of linhas){
+      if(l.length < 8 || linhaLixo.test(l)) continue;
+      titulo = l; break;
+    }
   }
   return {titulo, localizacao, areaM2: area, valor};
+}
+
+// ───────────────────────── campos de imagem dinâmicos (terreno) ─────────────────────────
+function criarCampoImagem(){
+  const row = document.createElement('div');
+  row.className = 'img-row';
+  row.innerHTML = `
+    <div class="img-row-fields">
+      <input type="text" class="t-imagem-input" placeholder="https://...jpg">
+      <div class="img-preview" style="display:none;"><img></div>
+    </div>
+    <button type="button" class="img-row-remove" title="Remover">×</button>
+  `;
+  const input = row.querySelector('.t-imagem-input');
+  const preview = row.querySelector('.img-preview');
+  input.addEventListener('input', () => {
+    const url = input.value.trim();
+    if(!url){ preview.style.display = 'none'; return; }
+    preview.style.display = 'block';
+    preview.querySelector('img').src = url;
+  });
+  row.querySelector('.img-row-remove').addEventListener('click', () => row.remove());
+  return row;
+}
+
+function adicionarCampoImagem(){
+  document.getElementById('t-imagens-lista').appendChild(criarCampoImagem());
+}
+
+function limparCamposImagem(){
+  const lista = document.getElementById('t-imagens-lista');
+  lista.innerHTML = '';
+  lista.appendChild(criarCampoImagem());
 }
 
 function processarTexto(){
@@ -724,7 +795,8 @@ function processarTexto(){
 }
 
 function previewImagem(inputId, previewId){
-  const url = document.getElementById(inputId).value.trim();
+  const raw = document.getElementById(inputId).value.trim();
+  const url = raw.split('\n')[0].trim();
   const box = document.getElementById(previewId);
   if(!url){ box.style.display='none'; return; }
   box.style.display='block';
@@ -733,13 +805,17 @@ function previewImagem(inputId, previewId){
 
 // ───────────────────────── salvar (Supabase se conectado, senão só simula) ─────────────────────────
 async function salvarTerreno(){
+  const imagens = Array.from(document.querySelectorAll('.t-imagem-input'))
+    .map(el => el.value.trim()).filter(Boolean);
+
   const payload = {
     titulo: document.getElementById('t-titulo').value,
     localizacao: document.getElementById('t-localizacao').value,
     area_m2: parseFloat(document.getElementById('t-area').value) || null,
     valor: parseFloat(document.getElementById('t-valor').value) || null,
     link_anuncio: document.getElementById('t-link').value,
-    imagem_url: document.getElementById('t-imagem').value,
+    imagem_url: imagens[0] || '',
+    imagens_extra: imagens.slice(1),
     corretora_responsavel: document.getElementById('t-corretora').value,
     status: 'disponivel',
   };
@@ -759,6 +835,7 @@ async function salvarTerreno(){
   const {error} = await supabaseClient.from('terrenos').insert(payload);
   statusEl.textContent = error ? 'Erro ao salvar: ' + error.message : 'Terreno salvo no Supabase.';
   statusEl.style.color = error ? '#E74C3C' : '#2ECC71';
+  if(!error) limparCamposImagem();
 }
 
 async function salvarPlanta(){
@@ -828,6 +905,7 @@ async function conectarSupabase(urlParam, keyParam){
 try{
   renderHome(); renderTerrenos(); renderFiltroQuartos(); renderPlantas();
   popularSelectsCalculadora(); renderFAQ(); calcularSimulador();
+  limparCamposImagem();
   document.getElementById('cfg-url').value = SUPABASE_URL;
   document.getElementById('cfg-key').value = SUPABASE_ANON_KEY;
   conectarSupabase(SUPABASE_URL, SUPABASE_ANON_KEY);
