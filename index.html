@@ -512,6 +512,11 @@
 
 <script>
 // ───────────────────────── estado + dados de exemplo ─────────────────────────
+// Chave anon/public é feita pra ser exposta no front-end — a proteção real
+// está nas políticas de RLS do banco, não no sigilo dessa chave.
+const SUPABASE_URL = 'https://wfoysxuynbcuxybkqmfz.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indmb3lzeHV5bmJjdXh5YmtxbWZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3OTk3NDcsImV4cCI6MjA4ODM3NTc0N30.v28Tj6z6PrnyUk_kFSvvchjzwHmV7ZXcJH903hQTiZg';
+
 let supabaseClient = null;
 
 const mockTerrenos = [
@@ -787,9 +792,9 @@ async function salvarPlanta(){
 }
 
 // ───────────────────────── configuração supabase ─────────────────────────
-async function conectarSupabase(){
-  const url = document.getElementById('cfg-url').value.trim();
-  const key = document.getElementById('cfg-key').value.trim();
+async function conectarSupabase(urlParam, keyParam){
+  const url = urlParam || document.getElementById('cfg-url').value.trim();
+  const key = keyParam || document.getElementById('cfg-key').value.trim();
   const pill = document.getElementById('conn-status');
   const pillText = document.getElementById('conn-status-text');
 
@@ -823,6 +828,9 @@ async function conectarSupabase(){
 try{
   renderHome(); renderTerrenos(); renderFiltroQuartos(); renderPlantas();
   popularSelectsCalculadora(); renderFAQ(); calcularSimulador();
+  document.getElementById('cfg-url').value = SUPABASE_URL;
+  document.getElementById('cfg-key').value = SUPABASE_ANON_KEY;
+  conectarSupabase(SUPABASE_URL, SUPABASE_ANON_KEY);
 }catch(e){ console.error('Erro ao inicializar:', e); }
 </script>
 </body>
