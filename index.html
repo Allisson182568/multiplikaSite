@@ -114,6 +114,10 @@
   .card-title{ font-size:13px; font-weight:600; margin-bottom:6px; }
   .card-meta{ font-family:'JetBrains Mono', monospace; font-size:11px; color:#9A9690; margin-bottom:6px; }
   .card-price{ color:#FF6B00; font-weight:700; font-size:14px; font-family:'JetBrains Mono', monospace; }
+  .ref-tag{
+    display:inline-block; color:#57534E; font-weight:700; font-size:10px; letter-spacing:0.8px;
+    font-family:'JetBrains Mono', monospace;
+  }
 
   /* ── catálogos ── */
   .filters{ display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
@@ -442,9 +446,15 @@
 
   <!-- ═══════════ MODELOS ═══════════ -->
   <section class="view" id="view-modelos">
-    <h2 style="font-size:24px; margin:32px 0 20px;">Modelos de casa</h2>
+    <h2 style="font-size:24px; margin:32px 0 8px;">Modelos de casa</h2>
+    <p style="color:#9A9690; font-size:13.5px; margin-bottom:20px;">Esses modelos são referências de inspiração — o projeto final é desenvolvido sob medida pra você, de acordo com o terreno e as suas necessidades.</p>
+    <label class="field-label">Quartos</label>
     <div class="filters" id="filtro-quartos"></div>
-    <div class="grid" id="grid-plantas"></div>
+    <label class="field-label">Suítes</label>
+    <div class="filters" id="filtro-suites"></div>
+    <label class="field-label">Vagas</label>
+    <div class="filters" id="filtro-vagas"></div>
+    <div class="grid" id="grid-plantas" style="margin-top:20px;"></div>
   </section>
 
   <!-- ═══════════ DETALHE DO TERRENO ═══════════ -->
@@ -477,19 +487,56 @@
     </div>
   </section>
 
+  <!-- ═══════════ DETALHE DO MODELO (referência) ═══════════ -->
+  <section class="view" id="view-planta-detalhe">
+    <button class="link-btn" style="margin:24px 0 16px; padding:0;" onclick="goTo('modelos')">← Voltar pra Modelos</button>
+
+    <div class="galeria">
+      <div class="galeria-principal" id="detp-imagem-principal"></div>
+      <div class="galeria-dots" id="detp-dots"></div>
+    </div>
+
+    <div class="eyebrow" style="margin-top:20px;">PROJETO DE REFERÊNCIA</div>
+    <h2 id="detp-titulo" style="font-size:22px; margin:10px 0 16px;"></h2>
+
+    <div class="det-info-grid">
+      <div><div class="det-info-label">Área</div><div class="det-info-valor" id="detp-area"></div></div>
+      <div><div class="det-info-label">Quartos</div><div class="det-info-valor" id="detp-quartos"></div></div>
+      <div><div class="det-info-label">Suítes</div><div class="det-info-valor" id="detp-suites"></div></div>
+      <div><div class="det-info-label">Vagas</div><div class="det-info-valor" id="detp-vagas"></div></div>
+    </div>
+
+    <p style="color:#9A9690; font-size:13.5px; line-height:1.6; margin-top:20px;">
+      Esse modelo é uma <b style="color:#F2F0EC;">referência de inspiração</b> — o projeto final da sua casa é desenvolvido sob medida, de acordo com o terreno e as suas necessidades.
+    </p>
+
+    <div class="hero-ctas" style="margin-top:28px;">
+      <button class="btn btn-primary" onclick="irParaFichaComModelo()">Usar como referência na minha ficha</button>
+    </div>
+  </section>
+
   <!-- ═══════════ CONSTRUÇÃO DO SONHO ═══════════ -->
   <section class="view" id="view-ficha">
     <h2 style="font-size:24px; margin:32px 0 8px;">Construção do sonho</h2>
-    <p style="color:#9A9690; font-size:14px; margin-bottom:8px;">Escolha um terreno e um modelo de casa — a gente monta sua ficha na hora.</p>
+    <p style="color:#9A9690; font-size:14px; margin-bottom:8px;">Escolha um terreno e um modelo de referência — a gente monta sua ficha na hora.</p>
+
+    <div class="dim-divider"><span>O que você procura?</span><div class="line"></div></div>
+    <div class="form-card" style="margin-bottom:8px;">
+      <div class="row3">
+        <div><label class="field-label">Quartos desejados</label><input type="text" id="ficha-quartos-desejados" placeholder="Ex: 3" oninput="renderFicha()"></div>
+        <div><label class="field-label">Suítes desejadas</label><input type="text" id="ficha-suites-desejadas" placeholder="Ex: 1" oninput="renderFicha()"></div>
+        <div><label class="field-label">Vagas desejadas</label><input type="text" id="ficha-vagas-desejadas" placeholder="Ex: 2" oninput="renderFicha()"></div>
+      </div>
+    </div>
 
     <div class="dim-divider"><span>1. Escolha um terreno</span><div class="line"></div></div>
     <div class="grid" id="ficha-grid-terrenos"></div>
 
-    <div class="dim-divider"><span>2. Escolha um modelo de casa</span><div class="line"></div></div>
+    <div class="dim-divider"><span>2. Escolha um modelo de referência</span><div class="line"></div></div>
     <div class="grid" id="ficha-grid-plantas"></div>
 
     <div class="dim-divider"><span>3. Sua ficha</span><div class="line"></div></div>
-    <div id="ficha-resultado"><p class="empty">Escolha um terreno e um modelo acima pra gerar sua ficha.</p></div>
+    <div id="ficha-resultado"><p class="empty">Escolha um terreno e um modelo de referência acima pra gerar sua ficha.</p></div>
   </section>
 
   <!-- ═══════════ ÁREA ADMIN (acesso: 5 cliques no logo) ═══════════ -->
@@ -555,11 +602,14 @@
 
         <div class="row2">
           <div><label class="field-label">Área construída (m²)</label><input type="text" id="p-area"></div>
-          <div><label class="field-label">Preço do projeto (R$)</label><input type="text" id="p-preco"></div>
+          <div><label class="field-label">Custo de referência (R$, opcional — uso interno)</label><input type="text" id="p-preco"></div>
         </div>
 
-        <div class="row3">
+        <div class="row2">
           <div><label class="field-label">Quartos</label><input type="text" id="p-quartos"></div>
+          <div><label class="field-label">Suítes</label><input type="text" id="p-suites"></div>
+        </div>
+        <div class="row2">
           <div><label class="field-label">Banheiros</label><input type="text" id="p-banheiros"></div>
           <div><label class="field-label">Vagas</label><input type="text" id="p-vagas"></div>
         </div>
@@ -624,6 +674,8 @@ const mockPlantas = [
 ];
 
 let quartosFiltro = null;
+let suitesFiltro = null;
+let vagasFiltro = null;
 
 // ───────────────────────── navegação ─────────────────────────
 function goTo(view){
@@ -682,15 +734,17 @@ function cardTerreno(t){
 }
 
 function cardPlanta(p){
+  const idx = mockPlantas.indexOf(p);
   const img = p.imagem_capa_url
     ? `<img src="${p.imagem_capa_url}" onerror="imgFallback(this)">`
     : `<div class="img-fallback">sem foto</div>`;
-  return `<div class="card" style="flex-basis:220px;">
+  const suitesTxt = p.suites ? ` · ${p.suites} suíte${p.suites > 1 ? 's' : ''}` : '';
+  return `<div class="card clickable" style="flex-basis:220px;" onclick="abrirDetalhePlanta(${idx})">
     ${img}
     <div class="card-body">
       <div class="card-title">${p.titulo}</div>
-      <div class="card-meta">${p.area_construida_m2} m² · ${p.quartos} qts · ${p.vagas} vagas</div>
-      <div class="card-price">R$ ${Number(p.preco).toLocaleString('pt-BR')}</div>
+      <div class="card-meta">${p.area_construida_m2 ?? '—'} m² · ${p.quartos ?? '—'} qts${suitesTxt} · ${p.vagas ?? '—'} vagas</div>
+      <div class="ref-tag">REFERÊNCIA</div>
     </div>
   </div>`;
 }
@@ -700,8 +754,11 @@ function renderHome(){
   document.getElementById('carousel-plantas').innerHTML = mockPlantas.map(cardPlanta).join('') || '<p class="empty">Nenhum modelo cadastrado ainda.</p>';
 }
 
-// ───────────────────────── detalhe do terreno + galeria ─────────────────────────
+// ───────────────────────── detalhe do terreno + galeria (genérica) ─────────────────────────
 let terrenoAtualDetalhe = null;
+let plantaAtualDetalhe = null;
+let galeriaImagens = [];
+let galeriaIdPrefix = 'det';
 let galeriaAtualIndex = 0;
 let galeriaTimer = null;
 
@@ -717,8 +774,6 @@ function renderDetalheTerreno(){
   const t = terrenoAtualDetalhe;
   if(!t) return;
   const imagens = [t.imagem_url, ...(t.imagens_extra || [])].filter(Boolean);
-  galeriaAtualIndex = 0;
-  clearInterval(galeriaTimer);
 
   document.getElementById('det-titulo').textContent = t.titulo || t.localizacao || 'Terreno';
   document.getElementById('det-localizacao').textContent = t.localizacao || '';
@@ -733,13 +788,39 @@ function renderDetalheTerreno(){
   if(t.link_anuncio){ linkBtn.href = t.link_anuncio; linkBtn.style.display = 'inline-flex'; }
   else { linkBtn.style.display = 'none'; }
 
-  renderGaleria(imagens);
-  iniciarAutoRotacao(imagens);
+  renderGaleria(imagens, 'det');
 }
 
-function renderGaleria(imagens){
-  const main = document.getElementById('det-imagem-principal');
-  const dots = document.getElementById('det-dots');
+function abrirDetalhePlanta(idx){
+  const p = mockPlantas[idx];
+  if(!p) return;
+  plantaAtualDetalhe = p;
+  goTo('planta-detalhe');
+  renderDetalhePlanta();
+}
+
+function renderDetalhePlanta(){
+  const p = plantaAtualDetalhe;
+  if(!p) return;
+  const imagens = [p.imagem_capa_url, ...(p.imagens_extra || [])].filter(Boolean);
+
+  document.getElementById('detp-titulo').textContent = p.titulo || 'Modelo de casa';
+  document.getElementById('detp-area').textContent = p.area_construida_m2 ? p.area_construida_m2 + ' m²' : '—';
+  document.getElementById('detp-quartos').textContent = p.quartos ?? '—';
+  document.getElementById('detp-suites').textContent = p.suites ?? '—';
+  document.getElementById('detp-vagas').textContent = p.vagas ?? '—';
+
+  renderGaleria(imagens, 'detp');
+}
+
+function renderGaleria(imagens, idPrefix){
+  galeriaImagens = imagens;
+  galeriaIdPrefix = idPrefix;
+  galeriaAtualIndex = 0;
+  clearInterval(galeriaTimer);
+
+  const main = document.getElementById(idPrefix + '-imagem-principal');
+  const dots = document.getElementById(idPrefix + '-dots');
   if(imagens.length === 0){
     main.innerHTML = '<div class="img-fallback" style="aspect-ratio:16/10; border-radius:16px;">sem foto</div>';
     dots.innerHTML = '';
@@ -749,29 +830,27 @@ function renderGaleria(imagens){
   dots.innerHTML = imagens.length > 1
     ? imagens.map((_, i) => `<button class="galeria-dot ${i === 0 ? 'active' : ''}" onclick="irParaImagem(${i})"></button>`).join('')
     : '';
+  iniciarAutoRotacao();
 }
 
-function atualizarGaleria(imagens){
-  document.getElementById('det-imagem-principal').innerHTML = `<img src="${imagens[galeriaAtualIndex]}" onerror="imgFallback(this)">`;
+function atualizarGaleria(){
+  document.getElementById(galeriaIdPrefix + '-imagem-principal').innerHTML = `<img src="${galeriaImagens[galeriaAtualIndex]}" onerror="imgFallback(this)">`;
   document.querySelectorAll('.galeria-dot').forEach((d, i) => d.classList.toggle('active', i === galeriaAtualIndex));
 }
 
-function iniciarAutoRotacao(imagens){
+function iniciarAutoRotacao(){
   clearInterval(galeriaTimer);
-  if(imagens.length <= 1) return;
+  if(galeriaImagens.length <= 1) return;
   galeriaTimer = setInterval(() => {
-    galeriaAtualIndex = (galeriaAtualIndex + 1) % imagens.length;
-    atualizarGaleria(imagens);
+    galeriaAtualIndex = (galeriaAtualIndex + 1) % galeriaImagens.length;
+    atualizarGaleria();
   }, 4000);
 }
 
 function irParaImagem(i){
-  const t = terrenoAtualDetalhe;
-  if(!t) return;
-  const imagens = [t.imagem_url, ...(t.imagens_extra || [])].filter(Boolean);
   galeriaAtualIndex = i;
-  atualizarGaleria(imagens);
-  iniciarAutoRotacao(imagens);
+  atualizarGaleria();
+  iniciarAutoRotacao();
 }
 
 // ───────────────────────── construção do sonho (ficha) ─────────────────────────
@@ -794,12 +873,13 @@ function cardTerrenoSelecionavel(t, idx){
 function cardPlantaSelecionavel(p, idx){
   const sel = idx === fichaModeloIdx ? ' selected' : '';
   const img = p.imagem_capa_url ? `<img src="${p.imagem_capa_url}" onerror="imgFallback(this)">` : `<div class="img-fallback">sem foto</div>`;
+  const suitesTxt = p.suites ? ` · ${p.suites} suíte${p.suites > 1 ? 's' : ''}` : '';
   return `<div class="card clickable${sel}" onclick="selecionarFichaModelo(${idx})">
     ${img}
     <div class="card-body">
       <div class="card-title">${p.titulo}</div>
-      <div class="card-meta">${p.area_construida_m2} m² · ${p.quartos} qts</div>
-      <div class="card-price">R$ ${Number(p.preco).toLocaleString('pt-BR')}</div>
+      <div class="card-meta">${p.area_construida_m2 ?? '—'} m² · ${p.quartos ?? '—'} qts${suitesTxt}</div>
+      <div class="ref-tag">REFERÊNCIA</div>
     </div>
   </div>`;
 }
@@ -819,35 +899,51 @@ function renderFicha(){
   const t = mockTerrenos[fichaTerrenoIdx];
   const p = mockPlantas[fichaModeloIdx];
   if(!t || !p){
-    box.innerHTML = '<p class="empty">Escolha um terreno e um modelo acima pra gerar sua ficha.</p>';
+    box.innerHTML = '<p class="empty">Escolha um terreno e um modelo de referência acima pra gerar sua ficha.</p>';
     return;
   }
   const custoM2 = 1800;
-  const custoConstrucao = custoM2 * (p.area_construida_m2 || 0);
-  const total = (t.valor || 0) + (p.preco || 0) + custoConstrucao;
+  const areaRef = p.area_construida_m2 || 0;
+  const custoConstrucao = custoM2 * areaRef;
+  const total = (t.valor || 0) + custoConstrucao;
+
+  const quartosDesejados = document.getElementById('ficha-quartos-desejados').value.trim();
+  const suitesDesejadas = document.getElementById('ficha-suites-desejadas').value.trim();
+  const vagasDesejadas = document.getElementById('ficha-vagas-desejadas').value.trim();
 
   const msg = encodeURIComponent(
     `Olá! Montei minha ficha no site da Multiplika:\n\n` +
     `Terreno: ${t.localizacao} — R$ ${Number(t.valor).toLocaleString('pt-BR')}\n` +
-    `Modelo: ${p.titulo} (${p.area_construida_m2} m²) — R$ ${Number(p.preco).toLocaleString('pt-BR')}\n` +
-    `Construção estimada: R$ ${custoConstrucao.toLocaleString('pt-BR', {maximumFractionDigits:0})}\n` +
+    `Modelo de referência: ${p.titulo} (${areaRef} m²)\n` +
+    (quartosDesejados ? `Quartos desejados: ${quartosDesejados}\n` : '') +
+    (suitesDesejadas ? `Suítes desejadas: ${suitesDesejadas}\n` : '') +
+    (vagasDesejadas ? `Vagas desejadas: ${vagasDesejadas}\n` : '') +
+    `Construção estimada (área de referência): R$ ${custoConstrucao.toLocaleString('pt-BR', {maximumFractionDigits:0})}\n` +
     `Total estimado: R$ ${total.toLocaleString('pt-BR', {maximumFractionDigits:0})}\n\n` +
-    `Quero saber os próximos passos!`
+    `Quero um orçamento personalizado!`
   );
 
   box.innerHTML = `
     <div class="calc-card">
       <div class="calc-line"><span>Terreno (${t.localizacao})</span><span>R$ ${Number(t.valor).toLocaleString('pt-BR')}</span></div>
-      <div class="calc-line"><span>Modelo (${p.titulo})</span><span>R$ ${Number(p.preco).toLocaleString('pt-BR')}</span></div>
-      <div class="calc-line"><span>Construção (${p.area_construida_m2} m² × R$ ${custoM2}/m²)</span><span>R$ ${custoConstrucao.toLocaleString('pt-BR', {maximumFractionDigits:0})}</span></div>
+      <div class="calc-line"><span>Modelo de referência (${p.titulo})</span><span class="ref-tag">${areaRef} m²</span></div>
+      <div class="calc-line"><span>Construção estimada (${areaRef} m² × R$ ${custoM2}/m²)</span><span>R$ ${custoConstrucao.toLocaleString('pt-BR', {maximumFractionDigits:0})}</span></div>
       <div class="calc-line total"><span>Total estimado</span><span>R$ ${total.toLocaleString('pt-BR', {maximumFractionDigits:0})}</span></div>
-      <a class="btn btn-primary" style="display:block; text-align:center; margin-top:20px; text-decoration:none;" href="https://wa.me/5519989471441?text=${msg}" target="_blank" rel="noopener">Enviar ficha pelo WhatsApp</a>
+      <p class="hint" style="margin-top:12px;">O projeto arquitetônico final é desenvolvido sob medida e orçado à parte — os valores acima são só uma estimativa pra você se planejar.</p>
+      <a class="btn btn-primary" style="display:block; text-align:center; margin-top:16px; text-decoration:none;" href="https://wa.me/5519989471441?text=${msg}" target="_blank" rel="noopener">Enviar ficha pelo WhatsApp</a>
     </div>
   `;
 }
 
 function irParaFichaComTerreno(){
   fichaTerrenoIdx = mockTerrenos.indexOf(terrenoAtualDetalhe);
+  goTo('ficha');
+  renderFichaGrids();
+  renderFicha();
+}
+
+function irParaFichaComModelo(){
+  fichaModeloIdx = mockPlantas.indexOf(plantaAtualDetalhe);
   goTo('ficha');
   renderFichaGrids();
   renderFicha();
@@ -860,19 +956,29 @@ function renderTerrenos(){
 }
 
 function renderPlantas(){
-  const filtrados = quartosFiltro ? mockPlantas.filter(p => p.quartos === quartosFiltro) : mockPlantas;
-  document.getElementById('grid-plantas').innerHTML = filtrados.map(cardPlanta).join('') || '<p class="empty">Nenhum modelo encontrado.</p>';
+  let filtrados = mockPlantas;
+  if(quartosFiltro) filtrados = filtrados.filter(p => p.quartos === quartosFiltro);
+  if(suitesFiltro) filtrados = filtrados.filter(p => p.suites === suitesFiltro);
+  if(vagasFiltro) filtrados = filtrados.filter(p => p.vagas === vagasFiltro);
+  document.getElementById('grid-plantas').innerHTML = filtrados.map(cardPlanta).join('') || '<p class="empty">Nenhum modelo encontrado com esses filtros.</p>';
 }
 
-function renderFiltroQuartos(){
-  const opcoes = [2,3,4];
-  document.getElementById('filtro-quartos').innerHTML = opcoes.map(q =>
-    `<button class="chip ${quartosFiltro===q?'active':''}" onclick="toggleQuartos(${q})">${q} quartos</button>`
+function renderFiltrosModelos(){
+  document.getElementById('filtro-quartos').innerHTML = [2,3,4].map(q =>
+    `<button class="chip ${quartosFiltro===q?'active':''}" onclick="toggleFiltroModelo('quartos',${q})">${q} quartos</button>`
+  ).join('');
+  document.getElementById('filtro-suites').innerHTML = [1,2,3].map(s =>
+    `<button class="chip ${suitesFiltro===s?'active':''}" onclick="toggleFiltroModelo('suites',${s})">${s} suíte${s>1?'s':''}</button>`
+  ).join('');
+  document.getElementById('filtro-vagas').innerHTML = [1,2,3].map(v =>
+    `<button class="chip ${vagasFiltro===v?'active':''}" onclick="toggleFiltroModelo('vagas',${v})">${v} vaga${v>1?'s':''}</button>`
   ).join('');
 }
-function toggleQuartos(q){
-  quartosFiltro = quartosFiltro === q ? null : q;
-  renderFiltroQuartos();
+function toggleFiltroModelo(tipo, valor){
+  if(tipo === 'quartos') quartosFiltro = quartosFiltro === valor ? null : valor;
+  if(tipo === 'suites') suitesFiltro = suitesFiltro === valor ? null : valor;
+  if(tipo === 'vagas') vagasFiltro = vagasFiltro === valor ? null : valor;
+  renderFiltrosModelos();
   renderPlantas();
 }
 
@@ -1131,13 +1237,16 @@ function parsePlantaTexto(raw){
   const quartosMatch = texto.match(/Dormit[óo]rios?:?\s*(\d+)/i) || texto.match(/Quartos?:?\s*(\d+)/i);
   const quartos = quartosMatch ? parseInt(quartosMatch[1]) : null;
 
+  const suitesMatch = texto.match(/Su[íi]tes?:?\s*(\d+)/i);
+  const suites = suitesMatch ? parseInt(suitesMatch[1]) : null;
+
   const vagasMatch = texto.match(/Garagem:?\s*(\d+)/i) || texto.match(/Vagas?:?\s*(\d+)/i);
   const vagas = vagasMatch ? parseInt(vagasMatch[1]) : null;
 
   const precoMatch = texto.match(/R\$\s?([\d.]{3,12}(?:,\d{2})?)/);
   const preco = precoMatch ? parseFloat(precoMatch[1].replace(/\./g,'').replace(',','.')) : null;
 
-  return {titulo, areaM2, banheiros, quartos, vagas, preco};
+  return {titulo, areaM2, banheiros, quartos, suites, vagas, preco};
 }
 
 function processarTextoPlanta(){
@@ -1146,6 +1255,7 @@ function processarTextoPlanta(){
   document.getElementById('p-titulo').value = r.titulo || '';
   document.getElementById('p-area').value = r.areaM2 || '';
   document.getElementById('p-quartos').value = r.quartos || '';
+  document.getElementById('p-suites').value = r.suites || '';
   document.getElementById('p-banheiros').value = r.banheiros || '';
   document.getElementById('p-vagas').value = r.vagas || '';
   if(r.preco) document.getElementById('p-preco').value = r.preco;
@@ -1159,6 +1269,7 @@ async function salvarPlanta(){
     titulo: document.getElementById('p-titulo').value,
     area_construida_m2: parseFloat(document.getElementById('p-area').value) || null,
     quartos: parseInt(document.getElementById('p-quartos').value) || null,
+    suites: parseInt(document.getElementById('p-suites').value) || null,
     banheiros: parseInt(document.getElementById('p-banheiros').value) || null,
     vagas: parseInt(document.getElementById('p-vagas').value) || null,
     preco: parseFloat(document.getElementById('p-preco').value) || null,
@@ -1166,8 +1277,8 @@ async function salvarPlanta(){
     imagens_extra: imagens.slice(1),
   };
   const statusEl = document.getElementById('p-status');
-  if(!payload.titulo || !payload.preco){
-    statusEl.textContent = 'Preencha ao menos título e preço.';
+  if(!payload.titulo){
+    statusEl.textContent = 'Preencha ao menos o título.';
     statusEl.style.color = '#E74C3C';
     return;
   }
@@ -1219,7 +1330,7 @@ async function conectarSupabase(urlParam, keyParam){
 
 // ───────────────────────── boot ─────────────────────────
 try{
-  renderHome(); renderTerrenos(); renderFiltroQuartos(); renderPlantas(); renderFichaGrids();
+  renderHome(); renderTerrenos(); renderFiltrosModelos(); renderPlantas(); renderFichaGrids();
   popularSelectsCalculadora(); renderFAQ(); calcularSimulador();
   limparCamposImagem('t');
   limparCamposImagem('p');
