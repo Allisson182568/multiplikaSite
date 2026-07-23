@@ -118,6 +118,14 @@
     display:inline-block; color:#57534E; font-weight:700; font-size:10px; letter-spacing:0.8px;
     font-family:'JetBrains Mono', monospace;
   }
+  .card-media{ position:relative; }
+  .ref-like{
+    position:absolute; top:8px; right:8px; width:32px; height:32px; border-radius:50%;
+    background:rgba(10,10,10,0.55); border:1px solid #2A2A2A; color:#9A9690; font-size:16px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; backdrop-filter:blur(4px);
+    transition:.15s;
+  }
+  .ref-like.liked{ background:#FF6B00; border-color:#FF6B00; color:#0A0A0A; }
 
   /* ── catálogos ── */
   .filters{ display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
@@ -447,14 +455,65 @@
   <!-- ═══════════ MODELOS ═══════════ -->
   <section class="view" id="view-modelos">
     <h2 style="font-size:24px; margin:32px 0 8px;">Modelos de casa</h2>
-    <p style="color:#9A9690; font-size:13.5px; margin-bottom:20px;">Esses modelos são referências de inspiração — o projeto final é desenvolvido sob medida pra você, de acordo com o terreno e as suas necessidades.</p>
-    <label class="field-label">Quartos</label>
-    <div class="filters" id="filtro-quartos"></div>
-    <label class="field-label">Suítes</label>
-    <div class="filters" id="filtro-suites"></div>
-    <label class="field-label">Vagas</label>
-    <div class="filters" id="filtro-vagas"></div>
-    <div class="grid" id="grid-plantas" style="margin-top:20px;"></div>
+    <p style="color:#9A9690; font-size:13.5px; margin-bottom:20px;">Esses projetos são referências de inspiração. Conta pra gente o que você procura, curta ♥ os que mais combinam com o seu gosto lá embaixo, e a Multiplika monta um projeto sob medida pra você.</p>
+
+    <div class="form-card">
+      <label class="field-label">Metragem da construção desejada</label>
+      <select class="calc-select" id="req-metragem">
+        <option value="">Sem preferência</option>
+        <option>Até 100 m²</option>
+        <option>100 a 150 m²</option>
+        <option>150 a 200 m²</option>
+        <option>200 a 300 m²</option>
+        <option>Acima de 300 m²</option>
+      </select>
+
+      <div class="row2">
+        <div><label class="field-label">Quartos</label>
+          <select class="calc-select" id="req-quartos">
+            <option value="">Sem preferência</option>
+            <option>1</option><option>2</option><option>3</option><option>4</option><option>5+</option>
+          </select>
+        </div>
+        <div><label class="field-label">Suítes</label>
+          <select class="calc-select" id="req-suites">
+            <option value="">Sem preferência</option>
+            <option>0</option><option>1</option><option>2</option><option>3</option><option>4+</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div><label class="field-label">Banheiros</label>
+          <select class="calc-select" id="req-banheiros">
+            <option value="">Sem preferência</option>
+            <option>1</option><option>2</option><option>3</option><option>4+</option>
+          </select>
+        </div>
+        <div><label class="field-label">Vagas de garagem</label>
+          <select class="calc-select" id="req-vagas">
+            <option value="">Sem preferência</option>
+            <option>1</option><option>2</option><option>3</option><option>4+</option>
+          </select>
+        </div>
+      </div>
+
+      <label class="field-label">O que mais você gostaria de ter?</label>
+      <div class="filters" id="req-amenidades">
+        <button type="button" class="chip" data-amenidade="Área gourmet" onclick="toggleAmenidade(this)">Área gourmet</button>
+        <button type="button" class="chip" data-amenidade="Piscina" onclick="toggleAmenidade(this)">Piscina</button>
+        <button type="button" class="chip" data-amenidade="Escritório" onclick="toggleAmenidade(this)">Escritório</button>
+        <button type="button" class="chip" data-amenidade="Closet" onclick="toggleAmenidade(this)">Closet</button>
+        <button type="button" class="chip" data-amenidade="Varanda gourmet" onclick="toggleAmenidade(this)">Varanda gourmet</button>
+      </div>
+
+      <button class="btn btn-primary" style="margin-top:20px; width:100%;" onclick="enviarRequisitos()">Enviar meus requisitos pelo WhatsApp</button>
+      <p class="hint" id="req-status"></p>
+    </div>
+
+    <div class="dim-divider"><span>Projetos de referência</span><div class="line"></div></div>
+    <p style="color:#57534E; font-size:12.5px; margin-bottom:16px;">Curta ♥ os que mais combinam com o seu gosto — isso nos ajuda a entender seu estilo.</p>
+    <div class="grid" id="grid-plantas"></div>
   </section>
 
   <!-- ═══════════ DETALHE DO TERRENO ═══════════ -->
@@ -673,9 +732,8 @@ const mockPlantas = [
   {titulo:'Sobrado 4 quartos', area_construida_m2:145, quartos:4, banheiros:3, vagas:2, preco:980, imagem_capa_url:''},
 ];
 
-let quartosFiltro = null;
-let suitesFiltro = null;
-let vagasFiltro = null;
+let amenidadesSelecionadas = new Set();
+let plantasCurtidas = new Set();
 
 // ───────────────────────── navegação ─────────────────────────
 function goTo(view){
@@ -735,13 +793,17 @@ function cardTerreno(t){
 
 function cardPlanta(p){
   const idx = mockPlantas.indexOf(p);
+  const liked = plantasCurtidas.has(idx);
   const img = p.imagem_capa_url
     ? `<img src="${p.imagem_capa_url}" onerror="imgFallback(this)">`
     : `<div class="img-fallback">sem foto</div>`;
   const suitesTxt = p.suites ? ` · ${p.suites} suíte${p.suites > 1 ? 's' : ''}` : '';
-  return `<div class="card clickable" style="flex-basis:220px;" onclick="abrirDetalhePlanta(${idx})">
-    ${img}
-    <div class="card-body">
+  return `<div class="card" style="flex-basis:220px;">
+    <div class="card-media clickable" onclick="abrirDetalhePlanta(${idx})">
+      ${img}
+      <button class="ref-like ${liked ? 'liked' : ''}" onclick="event.stopPropagation(); toggleGostei(${idx})" title="Curtir esse projeto">♥</button>
+    </div>
+    <div class="card-body clickable" onclick="abrirDetalhePlanta(${idx})">
       <div class="card-title">${p.titulo}</div>
       <div class="card-meta">${p.area_construida_m2 ?? '—'} m² · ${p.quartos ?? '—'} qts${suitesTxt} · ${p.vagas ?? '—'} vagas</div>
       <div class="ref-tag">REFERÊNCIA</div>
@@ -956,30 +1018,48 @@ function renderTerrenos(){
 }
 
 function renderPlantas(){
-  let filtrados = mockPlantas;
-  if(quartosFiltro) filtrados = filtrados.filter(p => p.quartos === quartosFiltro);
-  if(suitesFiltro) filtrados = filtrados.filter(p => p.suites === suitesFiltro);
-  if(vagasFiltro) filtrados = filtrados.filter(p => p.vagas === vagasFiltro);
-  document.getElementById('grid-plantas').innerHTML = filtrados.map(cardPlanta).join('') || '<p class="empty">Nenhum modelo encontrado com esses filtros.</p>';
+  document.getElementById('grid-plantas').innerHTML = mockPlantas.map(cardPlanta).join('') || '<p class="empty">Nenhum modelo cadastrado ainda.</p>';
 }
 
-function renderFiltrosModelos(){
-  document.getElementById('filtro-quartos').innerHTML = [2,3,4].map(q =>
-    `<button class="chip ${quartosFiltro===q?'active':''}" onclick="toggleFiltroModelo('quartos',${q})">${q} quartos</button>`
-  ).join('');
-  document.getElementById('filtro-suites').innerHTML = [1,2,3].map(s =>
-    `<button class="chip ${suitesFiltro===s?'active':''}" onclick="toggleFiltroModelo('suites',${s})">${s} suíte${s>1?'s':''}</button>`
-  ).join('');
-  document.getElementById('filtro-vagas').innerHTML = [1,2,3].map(v =>
-    `<button class="chip ${vagasFiltro===v?'active':''}" onclick="toggleFiltroModelo('vagas',${v})">${v} vaga${v>1?'s':''}</button>`
-  ).join('');
-}
-function toggleFiltroModelo(tipo, valor){
-  if(tipo === 'quartos') quartosFiltro = quartosFiltro === valor ? null : valor;
-  if(tipo === 'suites') suitesFiltro = suitesFiltro === valor ? null : valor;
-  if(tipo === 'vagas') vagasFiltro = vagasFiltro === valor ? null : valor;
-  renderFiltrosModelos();
+function toggleGostei(idx){
+  if(plantasCurtidas.has(idx)) plantasCurtidas.delete(idx);
+  else plantasCurtidas.add(idx);
   renderPlantas();
+  renderHome();
+}
+
+function toggleAmenidade(el){
+  const a = el.dataset.amenidade;
+  if(amenidadesSelecionadas.has(a)){ amenidadesSelecionadas.delete(a); el.classList.remove('active'); }
+  else { amenidadesSelecionadas.add(a); el.classList.add('active'); }
+}
+
+function enviarRequisitos(){
+  const metragem = document.getElementById('req-metragem').value;
+  const quartos = document.getElementById('req-quartos').value;
+  const suites = document.getElementById('req-suites').value;
+  const banheiros = document.getElementById('req-banheiros').value;
+  const vagas = document.getElementById('req-vagas').value;
+  const amenidades = Array.from(amenidadesSelecionadas).join(', ');
+  const curtidos = Array.from(plantasCurtidas).map(i => mockPlantas[i]?.titulo).filter(Boolean).join(', ');
+
+  if(!metragem && !quartos && !suites && !banheiros && !vagas && !amenidades && !curtidos){
+    document.getElementById('req-status').textContent = 'Preencha ao menos uma preferência ou curta algum projeto de referência.';
+    document.getElementById('req-status').style.color = '#E74C3C';
+    return;
+  }
+
+  let msg = 'Olá! Aqui estão as especificações da casa que eu procuro:\n\n';
+  if(metragem) msg += `Metragem desejada: ${metragem}\n`;
+  if(quartos) msg += `Quartos: ${quartos}\n`;
+  if(suites) msg += `Suítes: ${suites}\n`;
+  if(banheiros) msg += `Banheiros: ${banheiros}\n`;
+  if(vagas) msg += `Vagas de garagem: ${vagas}\n`;
+  if(amenidades) msg += `Gostaria de ter: ${amenidades}\n`;
+  if(curtidos) msg += `\nProjetos de referência que gostei: ${curtidos}\n`;
+  msg += '\nQuero um orçamento personalizado!';
+
+  window.open('https://wa.me/5519989471441?text=' + encodeURIComponent(msg), '_blank', 'noopener');
 }
 
 // ───────────────────────── simulador de entrada ─────────────────────────
@@ -1330,7 +1410,7 @@ async function conectarSupabase(urlParam, keyParam){
 
 // ───────────────────────── boot ─────────────────────────
 try{
-  renderHome(); renderTerrenos(); renderFiltrosModelos(); renderPlantas(); renderFichaGrids();
+  renderHome(); renderTerrenos(); renderPlantas(); renderFichaGrids();
   popularSelectsCalculadora(); renderFAQ(); calcularSimulador();
   limparCamposImagem('t');
   limparCamposImagem('p');
